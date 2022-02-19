@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 // Components
@@ -6,20 +6,36 @@ import { InputTodo } from './components/InputTodo';
 import { TodoList } from './components/TodoList';
 import { Todo } from './model';
 
+// API
+import { getTodosApi } from './api/todosApi';
+
 const App: React.FC = () => {
   const [todo, setTodo] = useState<string>('');
   const [todos, setTodos] = useState<Todo[]>([]);
 
+  useEffect(() => {
+    getTodosApi().then((dataApiTodos: Todo[] | string | undefined) => {
+      if (
+        (dataApiTodos as Todo[]) &&
+        dataApiTodos !== undefined &&
+        typeof dataApiTodos !== 'string'
+      )
+        setTodos(dataApiTodos);
+    });
+  }, []);
+
+  console.log(todos);
+
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (todo) {
-      setTodos([...todos, { id: Date.now(), todo, isDone: false }]);
-      setTodo('');
-    }
-  };
+    console.log(todo);
 
-  console.log(todo, todos);
+    // if (todo) {
+    //   setTodos([...todos, { id: Date.now(), todo, isDone: false }]);
+    //   setTodo('');
+    // }
+  };
 
   return (
     <div className='App'>

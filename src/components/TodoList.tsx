@@ -14,7 +14,7 @@ export const TodoList: React.FC<Props> = ({ todos, setTodos }) => {
       {todos.map((todo) => (
         <SingleTodo
           todo={todo}
-          key={todo.id}
+          key={todo._id}
           todos={todos}
           setTodos={setTodos}
         />

@@ -7,16 +7,12 @@ interface Props {
   handleAdd: (e: React.FormEvent) => void;
 }
 
-export const InputTodo: React.FC<Props> = ({
-  todo,
-  setTodo,
-  handleAdd,
-}: Props) => {
+export const InputTodo: React.FC<Props> = ({ todo, setTodo, handleAdd }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <form
       className='input'
-      onSubmit={(e) => {
+      onSubmit={(e: React.FormEvent<Element>) => {
         handleAdd(e);
         inputRef.current?.blur();
       }}>
