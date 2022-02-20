@@ -1,5 +1,5 @@
-import axios, { AxiosResponse } from 'axios';
-import { Todo } from '../model';
+import axios from 'axios';
+import { newTodo, Todo } from '../model';
 
 const baseAxios = axios.create({
   baseURL: 'http://localhost:5555',
@@ -10,12 +10,32 @@ const baseAxios = axios.create({
 
 export const getTodosApi = async () => {
   try {
-    const response: AxiosResponse<Todo[]> = await baseAxios.get<Todo[]>(
-      '/todos'
-    );
+    const response = await baseAxios.get<Todo[]>('/todos');
 
     return response.data;
   } catch (error: unknown) {
-    if (error instanceof Error) return error.message;
+    if (error instanceof Error) console.error(error.message);
+  }
+};
+
+export const createTodoApi = async (
+  newTodo: newTodo
+): Promise<Todo | undefined> => {
+  try {
+    const response = await baseAxios.post<Todo>('/todos', newTodo);
+
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof Error) console.error(error.message);
+  }
+};
+
+export const deleteTodoApi = async (id: string): Promise<Todo | undefined> => {
+  try {
+    const response = await baseAxios.delete<Todo>('/todos/' + id);
+
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof Error) console.error(error.message);
   }
 };

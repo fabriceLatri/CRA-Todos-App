@@ -4,43 +4,54 @@ import './App.css';
 // Components
 import { InputTodo } from './components/InputTodo';
 import { TodoList } from './components/TodoList';
-import { Todo } from './model';
+import { Todo, newTodo } from './model';
 
 // API
-import { getTodosApi } from './api/todosApi';
+import { getTodosApi, createTodoApi } from './api/todosApi';
 
 const App: React.FC = () => {
-  const [todo, setTodo] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
-    getTodosApi().then((dataApiTodos: Todo[] | string | undefined) => {
-      if (
-        (dataApiTodos as Todo[]) &&
-        dataApiTodos !== undefined &&
-        typeof dataApiTodos !== 'string'
-      )
-        setTodos(dataApiTodos);
-    });
+    getTodosApi()
+      .then((dataApiTodos: Todo[] | string | undefined) => {
+        if (
+          (dataApiTodos as Todo[]) &&
+          dataApiTodos !== undefined &&
+          typeof dataApiTodos !== 'string'
+        )
+          setTodos(dataApiTodos);
+      })
+      .catch(console.error);
   }, []);
 
-  console.log(todos);
-
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(todo);
+    if (title) {
+      const newTodo: newTodo = {
+        title,
+        done: false,
+      };
 
-    // if (todo) {
-    //   setTodos([...todos, { id: Date.now(), todo, isDone: false }]);
-    //   setTodo('');
-    // }
+      const todoCreated = await createTodoApi(newTodo);
+
+      if (todoCreated !== undefined && typeof todoCreated !== 'string') {
+        setTodos([...todos, todoCreated]);
+        setTitle('');
+      }
+    }
   };
 
   return (
     <div className='App'>
       <span className='heading'>Todos-React-App</span>
-      <InputTodo todo={todo} setTodo={setTodo} handleAdd={handleAdd} />
+      <InputTodo
+        todoTitle={title}
+        setTodoTitle={setTitle}
+        handleAdd={handleAdd}
+      />
       <TodoList todos={todos} setTodos={setTodos} />
     </div>
   );

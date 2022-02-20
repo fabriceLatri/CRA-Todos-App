@@ -5,6 +5,7 @@ import { AiFillDelete, AiFillEdit } from 'react-icons/ai';
 import { MdDone } from 'react-icons/md';
 
 import './styles.css';
+import { deleteTodoApi } from '../api/todosApi';
 
 interface Props {
   todo: Todo;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
-  const handleDone = (id: number) => {
+  const handleDone = (id: string) => {
     setTodos(
       todos.map((todo) =>
         todo._id === id ? { ...todo, isDone: !todo.isDone } : todo
@@ -21,11 +22,13 @@ export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
     );
   };
 
-  const handleDelete = (id: number) => {
-    setTodos(todos.filter((todo) => todo._id !== id));
+  const handleDelete = async (id: string) => {
+    const todoDeleted: Todo | undefined = await deleteTodoApi(id);
+    if (typeof todoDeleted !== 'undefined')
+      setTodos(todos.filter((todo) => todo._id !== id));
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     setTodos(
       todos.map((todo) =>
         todo._id === id ? { ...todo, isDone: !todo.isDone } : todo
