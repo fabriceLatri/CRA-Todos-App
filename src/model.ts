@@ -2,11 +2,17 @@ export interface Todo {
   _id: string;
   title: string;
   description?: string;
-  isDone: boolean;
+  done: boolean;
 }
 
-export interface newTodo {
+export interface NewTodo {
   title: string;
   description?: string;
   done: false;
+}
+
+export interface TodoUpdate {
+  title?: string;
+  description?: string;
+  done: boolean;
 }

@@ -5,7 +5,7 @@ import { AiFillDelete, AiFillEdit } from 'react-icons/ai';
 import { MdDone } from 'react-icons/md';
 
 import './styles.css';
-import { deleteTodoApi } from '../api/todosApi';
+import { deleteTodoApi, toogleDoneApi } from '../api/todosApi';
 
 interface Props {
   todo: Todo;
@@ -14,12 +14,27 @@ interface Props {
 }
 
 export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
-  const handleDone = (id: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo._id === id ? { ...todo, isDone: !todo.isDone } : todo
-      )
+  const handleDone = async (id: string) => {
+    const todoToUpdate: Todo | undefined = todos.find(
+      (todo) => todo._id === id
     );
+
+    if (todoToUpdate !== undefined) {
+      const todoUpdated: Todo | undefined = await toogleDoneApi(
+        todoToUpdate._id,
+        !todoToUpdate.done
+      );
+
+      if (todoUpdated !== undefined) {
+        setTodos(
+          todos.map((todo) =>
+            todo._id === todoUpdated._id
+              ? { ...todo, done: todoUpdated.done }
+              : todo
+          )
+        );
+      }
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -31,14 +46,14 @@ export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
   const handleEdit = (id: string) => {
     setTodos(
       todos.map((todo) =>
-        todo._id === id ? { ...todo, isDone: !todo.isDone } : todo
+        todo._id === id ? { ...todo, isDone: !todo.done } : todo
       )
     );
   };
 
   return (
     <form className='todos__single'>
-      {todo.isDone ? (
+      {todo.done ? (
         <s className='todos__single--text'>{todo.title}</s>
       ) : (
         <span className='todos__single--text'>{todo.title}</span>

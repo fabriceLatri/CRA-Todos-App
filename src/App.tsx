@@ -4,7 +4,7 @@ import './App.css';
 // Components
 import { InputTodo } from './components/InputTodo';
 import { TodoList } from './components/TodoList';
-import { Todo, newTodo } from './model';
+import { Todo, NewTodo } from './model';
 
 // API
 import { getTodosApi, createTodoApi } from './api/todosApi';
@@ -30,7 +30,7 @@ const App: React.FC = () => {
     e.preventDefault();
 
     if (title) {
-      const newTodo: newTodo = {
+      const newTodo: NewTodo = {
         title,
         done: false,
       };
