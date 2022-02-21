@@ -71,6 +71,24 @@
   outline: none;
 }
 
+.todos__single--form-group {
+  display: flex;
+  flex-direction: column;
+  margin: 1em 0;
+}
+
+.todos__single--submit {
+  border-radius: 5px;
+  background: transparent;
+  padding: 0.5em;
+}
+
+.todos__single--aside-icons {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .icon {
   margin-left: 10px;
   font-size: 25px;
@@ -80,6 +98,16 @@
 @media (max-width: 1200px) {
   .todos__single {
     width: 40%;
+  }
+}
+
+@media (max-width: 850px) {
+  .todos__single--aside-icons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-left: 0.5em;
   }
 }
 
@@ -94,5 +122,12 @@
 
   .todos__single {
     width: 100%;
+  }
+
+  .todos__single--aside-icons {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
   }
 }
