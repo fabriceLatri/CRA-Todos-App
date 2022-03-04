@@ -1,52 +1,61 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Todo } from '../model';
+import { Todo, AppUseReducerInterface } from '../model';
 
 import { AiFillDelete, AiFillEdit } from 'react-icons/ai';
 import { MdDone } from 'react-icons/md';
 
 import './styles.css';
 import { deleteTodoApi, toogleDoneApi, updateTodoApi } from '../api/todosApi';
+import { useCustomContext } from '../hooks/CustomContext.hook';
+import { TYPE } from '../actions/type';
+import { Draggable } from 'react-beautiful-dnd';
 
 interface Props {
   todo: Todo;
-  todos: Todo[];
-  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
+  index: number;
 }
 
-export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
+export const SingleTodo: React.FC<Props> = ({ todo, index }) => {
+  const providerState = useCustomContext() as AppUseReducerInterface;
+
+  const {
+    todoState: { todos, todosCompleted },
+    todoDispatch,
+  } = providerState;
+
   const [edit, setEdit] = useState<boolean>(false);
   const [title, setTitle] = useState<string>(todo.title);
   const [description, setDescription] = useState<string>(
     todo.description ? todo.description : ''
   );
+  const [done, setDone] = useState<boolean>(todo.done);
 
   const handleDone = async (id: string) => {
-    const todoToUpdate: Todo | undefined = todos.find(
-      (todo) => todo._id === id
-    );
+    let todoToUpdate: Todo | undefined;
 
-    if (todoToUpdate !== undefined) {
-      const todoUpdated: Todo | undefined = await toogleDoneApi(
+    if (todo.done) {
+      todoToUpdate = todosCompleted.find((todo) => todo._id === id);
+    } else {
+      todoToUpdate = todos.find((todo) => todo._id === id);
+    }
+
+    if (todoToUpdate) {
+      const response: Todo | undefined = await toogleDoneApi(
         todoToUpdate._id,
         !todoToUpdate.done
       );
 
-      if (todoUpdated !== undefined) {
-        setTodos(
-          todos.map((todo) =>
-            todo._id === todoUpdated._id
-              ? { ...todo, done: todoUpdated.done }
-              : todo
-          )
-        );
+      if (response) {
+        todoDispatch({ type: TYPE.DONE_TODO, payload: response });
+        setDone(!done);
       }
     }
   };
 
   const handleDelete = async (id: string) => {
-    const todoDeleted: Todo | undefined = await deleteTodoApi(id);
-    if (typeof todoDeleted !== 'undefined')
-      setTodos(todos.filter((todo) => todo._id !== id));
+    const response: Todo | undefined = await deleteTodoApi(id);
+    if (response) todoDispatch({ type: TYPE.DELETE_TODO, payload: response });
+    // setTodos(todos.filter((todo) => todo._id !== id));
   };
 
   const handleEdit = async (
@@ -60,14 +69,10 @@ export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
       todo.title = title;
       todo.description = description;
 
-      const todoUpdated: Todo | undefined = await updateTodoApi(todo);
+      const response: Todo | undefined = await updateTodoApi(todo);
 
-      if (todoUpdated !== undefined) {
-        setTodos(
-          todos.map((todo) =>
-            todo._id === id ? { ...todo, isDone: !todo.done } : todo
-          )
-        );
+      if (response) {
+        todoDispatch({ type: TYPE.EDIT_TODO, payload: response });
         setEdit(false);
       }
     }
@@ -77,66 +82,77 @@ export const SingleTodo: React.FC<Props> = ({ todo, todos, setTodos }) => {
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, [edit]);
+
+    return () => {
+      setDone(todo.done);
+    };
+  }, [edit, done, todo.done]);
 
   return (
-    <form
-      className='todos__single'
-      onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
-        handleEdit(e, todo._id)
-      }>
-      {edit ? (
-        <div>
-          <div className='todos__single--form-group'>
-            <label htmlFor='todoTitle'>Title</label>
-            <input
-              ref={inputRef}
-              id='todoTitle'
-              value={title}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setTitle(e.target.value);
-              }}
-              className='todos__single--text'
-            />
-          </div>
-          <div className='todos__single--form-group'>
-            <label htmlFor='todoDescription'>Description</label>
-            <input
-              value={description}
-              id='todoDescription'
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setDescription(e.target.value);
-              }}
-              className='todos__single--text'
-            />
-          </div>
-          <button type='submit' className='todos__single--submit'>
-            Edit
-          </button>
-        </div>
-      ) : todo.done ? (
-        <s className='todos__single--text'>{todo.title}</s>
-      ) : (
-        <span className='todos__single--text'>{todo.title}</span>
-      )}
+    <Draggable draggableId={todo._id.toString()} index={index}>
+      {(provided) => (
+        <form
+          className='todos__single'
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
+            handleEdit(e, todo._id)
+          }
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          ref={provided.innerRef}>
+          {edit ? (
+            <div>
+              <div className='todos__single--form-group'>
+                <label htmlFor='todoTitle'>Title</label>
+                <input
+                  ref={inputRef}
+                  id='todoTitle'
+                  value={title}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setTitle(e.target.value);
+                  }}
+                  className='todos__single--text'
+                />
+              </div>
+              <div className='todos__single--form-group'>
+                <label htmlFor='todoDescription'>Description</label>
+                <input
+                  value={description}
+                  id='todoDescription'
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setDescription(e.target.value);
+                  }}
+                  className='todos__single--text'
+                />
+              </div>
+              <button type='submit' className='todos__single--submit'>
+                Edit
+              </button>
+            </div>
+          ) : done ? (
+            <s className='todos__single--text'>{todo.title}</s>
+          ) : (
+            <span className='todos__single--text'>{todo.title}</span>
+          )}
 
-      <div className={edit ? 'todos__single--aside-icons' : ''}>
-        <span
-          className='icon'
-          onClick={() => {
-            if (!edit && !todo.done) {
-              setEdit(!edit);
-            }
-          }}>
-          <AiFillEdit />
-        </span>
-        <span className='icon' onClick={() => handleDelete(todo._id)}>
-          <AiFillDelete />
-        </span>
-        <span className='icon' onClick={() => handleDone(todo._id)}>
-          <MdDone />
-        </span>
-      </div>
-    </form>
+          <div className={edit ? 'todos__single--aside-icons' : ''}>
+            <span
+              className='icon'
+              onClick={() => {
+                if (!todo.done) {
+                  setEdit(!edit);
+                }
+              }}>
+              <AiFillEdit />
+            </span>
+            <span className='icon' onClick={() => handleDelete(todo._id)}>
+              <AiFillDelete />
+            </span>
+            <span className='icon' onClick={() => handleDone(todo._id)}>
+              <MdDone />
+            </span>
+          </div>
+        </form>
+      )}
+    </Draggable>
   );
 };

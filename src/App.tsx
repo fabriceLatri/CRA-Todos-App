@@ -1,59 +1,82 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import './App.css';
 
 // Components
 import { InputTodo } from './components/InputTodo';
 import { TodoList } from './components/TodoList';
-import { Todo, NewTodo } from './model';
+import { Todo, TodoState } from './model';
 
 // API
-import { getTodosApi, createTodoApi } from './api/todosApi';
+import { getTodosApi, toogleDoneApi } from './api/todosApi';
+
+// STATE BINDING
+import { TodoReducer } from './reducers/Todo.reducer';
+import { TYPE } from './actions/type';
+import CustomContext from './hooks/CustomContext.hook';
+
+// Drag'n Drop
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
 const App: React.FC = () => {
-  const [title, setTitle] = useState<string>('');
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const initialState: TodoState = {
+    todos: [],
+    todosCompleted: [],
+  };
+
+  const [todoState, todoDispatch] = useReducer(TodoReducer, initialState);
+
+  const providerState = {
+    todoState,
+    todoDispatch,
+  };
+
+  const getTodos = async () => {
+    const response: Todo[] | undefined = await getTodosApi();
+
+    if (response) {
+      todoDispatch({ type: TYPE.GET_TODOS, payload: response });
+    }
+  };
 
   useEffect(() => {
-    getTodosApi()
-      .then((dataApiTodos: Todo[] | string | undefined) => {
-        if (
-          (dataApiTodos as Todo[]) &&
-          dataApiTodos !== undefined &&
-          typeof dataApiTodos !== 'string'
-        )
-          setTodos(dataApiTodos);
-      })
-      .catch(console.error);
+    getTodos();
   }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
 
-    if (title) {
-      const newTodo: NewTodo = {
-        title,
-        done: false,
-      };
+    if (!destination || destination.droppableId === source.droppableId) return;
 
-      const todoCreated = await createTodoApi(newTodo);
+    // let active = todoState.todos,
+    //   complete = todoState.todosCompleted;
 
-      if (todoCreated !== undefined && typeof todoCreated !== 'string') {
-        setTodos([...todos, todoCreated]);
-        setTitle('');
+    if (source.droppableId === 'TodosList') {
+      // active.splice(source.index, 1);
+      const response = await toogleDoneApi(draggableId, true);
+
+      if (response) {
+        todoDispatch({ type: TYPE.DONE_TODO, payload: response });
+      }
+    } else {
+      // complete.splice(source.index, 1);
+      const response = await toogleDoneApi(draggableId, false);
+
+      if (response) {
+        todoDispatch({ type: TYPE.DONE_TODO, payload: response });
       }
     }
   };
 
   return (
-    <div className='App'>
-      <span className='heading'>Todos-React-App</span>
-      <InputTodo
-        todoTitle={title}
-        setTodoTitle={setTitle}
-        handleAdd={handleAdd}
-      />
-      <TodoList todos={todos} setTodos={setTodos} />
-    </div>
+    <CustomContext.Provider value={providerState}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className='App'>
+          <span className='heading'>Todos-React-App</span>
+          <InputTodo />
+          <TodoList />
+        </div>
+      </DragDropContext>
+    </CustomContext.Provider>
   );
 };
 
